@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -40,6 +41,7 @@ func main() {
 			continue
 		}
 		switch update.Message.Text {
+		// Summary for today
 		case "/summary":
 			summary, err := sheet.GetTodaySummary()
 			if err != nil {
@@ -47,7 +49,42 @@ func main() {
 			}
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, summary)
 			bot.Send(msg)
-		
+
+		// Summary for this month
+		case "/month":
+			monthSummary, err := sheet.GetMonthSummary()
+			if err != nil {
+				monthSummary = "❌ เกิดข้อผิดพลาด: " + err.Error()
+			}
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, monthSummary)
+			bot.Send(msg)
+
+
+		// Export data to Google Sheets
+		case "/export":
+			link := os.Getenv("SPREADSHEET_LINK")
+			if link == "" {
+				link = "⚠️ ยังไม่ได้ตั้งค่า SPREADSHEET_LINK ใน .env"
+			}
+
+			reply := fmt.Sprintf("📄 ข้อมูลสรุปรายเดือน Google Sheet:\n%s", link)
+			bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, reply))
+
+			// สร้างไฟล์ .xlsx
+			// excelFile := "export.xlsx"
+			// err := sheet.ExportToExcel(excelFile)
+			// if err != nil {
+			// 	bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, "❌ สร้างไฟล์ Excel ไม่สำเร็จ: "+err.Error()))
+			// 	break
+			// }
+
+			// doc := tgbotapi.NewDocument(update.Message.Chat.ID, tgbotapi.FilePath(excelFile))
+			// doc.Caption = "📦 ส่งออกข้อมูลรายรับรายจ่าย"
+			// bot.Send(doc)
+
+			// // ลบไฟล์ออกจากเครื่อง (optional)
+			// os.Remove(excelFile)
+
 		default:
 			parsed := parser.ParseMessage(update.Message.Text)
 
@@ -59,7 +96,6 @@ func main() {
 				parsed.Tag,
 				parsed.Note,
 			}
-		
 
 			err := sheet.WriteRow(row)
 			var reply string

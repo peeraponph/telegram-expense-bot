@@ -1,2 +1,13 @@
-.env*
-.credentials*
+# Config / Secret
+.env
+.env.*
+credentials.json
+export.xlsx
+
+# IDE/OS Junk
+*.DS_Store
+.idea/
+.vscode/
+
+# Go stuff
+bin/
