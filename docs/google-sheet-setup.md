@@ -1,79 +1,82 @@
-# 🧾 ตั้งค่า Google Sheet API สำหรับ Telegram Expense Bot
+# 🧾 Set Up Google Sheets API for Telegram Expense Bot
 
-เอกสารนี้สอนการสร้าง Google Sheet + เปิด Google Sheets API + สร้าง credentials เพื่อเชื่อมกับ Telegram Bot ที่ใช้ Go
-
----
-
-## ✅ สิ่งที่ต้องเตรียม
-
-- Google Account
-- มีสิทธิ์สร้าง Google Sheet
-- มีสิทธิ์สร้างโปรเจกต์ใน [Google Cloud Console](https://console.cloud.google.com)
+This guide walks you through creating a Google Sheet, enabling the Google Sheets API, and generating `credentials.json` for integration with the Go-based Telegram Expense Bot.
 
 ---
 
-## 🪜 ขั้นตอนทั้งหมด
+## ✅ Prerequisites
 
-### 1. สร้าง Google Sheet
-
-1. ไปที่ [Google Sheets](https://docs.google.com/spreadsheets/u/0/)
-2. คลิก "Blank" สร้างชีทใหม่
-3. ตั้งชื่อเช่น `line-expense-bot`
-4. เปลี่ยนชื่อแท็บด้านล่างเป็น `Sheet1` หรือ `Expenses` ตามที่ใช้ในโค้ด
-5. คัดลอก **ลิงก์ Google Sheet** ไว้ เช่น: https://docs.google.com/spreadsheets/d/1AbCDEFGHIJKLmnOxyz1234567890abcdef 
-> 🔹 ID คือส่วนหลัง `/d/` เช่น `1AbCDEFGHIJKLmnOxyz1234567890abcdef`
+- A Google account
+- Permission to create Google Sheets
+- Permission to create projects in [Google Cloud Console](https://console.cloud.google.com)
 
 ---
 
-### 2. เปิด Google Sheets API
+## 🪜 Steps
 
-1. ไปที่ [Google Cloud Console](https://console.cloud.google.com/)
-2. คลิก “Select Project” แล้วสร้าง Project ใหม่ เช่น `expense-bot`
-3. ไปที่เมนู `APIs & Services > Enabled APIs & services`
-4. คลิก “+ ENABLE APIS AND SERVICES”
-5. ค้นหา “Google Sheets API” แล้วกด “Enable”
+### 1. Create a Google Sheet
+
+1. Visit [Google Sheets](https://docs.google.com/spreadsheets/u/0/)
+2. Click “Blank” to create a new sheet
+3. Name it something like `telegram-expense-bot`
+4. Rename the tab to `Sheet1` or `Expenses` (as used in the code)
+5. Copy the **Google Sheet link**, e.g.:  
+   `https://docs.google.com/spreadsheets/d/1AbCDEFGHIJKLmnOxyz1234567890abcdef`  
+   > 🔹 The **Spreadsheet ID** is the part after `/d/`, e.g. `1AbCDEFGHIJKLmnOxyz1234567890abcdef`
 
 ---
 
-### 3. สร้าง Service Account
+### 2. Enable Google Sheets API
 
-1. ไปที่ `IAM & Admin > Service Accounts`
-2. คลิก “+ Create Service Account”
-3. กรอก:
-   - ชื่อ: `expense-bot-service`
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Click “Select Project” → create a new project (e.g., `expense-bot`)
+3. Go to `APIs & Services > Enabled APIs & services`
+4. Click “+ ENABLE APIS AND SERVICES”
+5. Search for `Google Sheets API` and click “Enable”
+
+---
+
+### 3. Create a Service Account
+
+1. Go to `IAM & Admin > Service Accounts`
+2. Click “+ Create Service Account”
+3. Fill in:
+   - Name: `expense-bot-service`
    - ID: `expense-bot-service`
-   - คำอธิบาย: `For accessing Google Sheet`
-4. กด “Create and Continue”
-5. **ในขั้นตอนให้สิทธิ์**: เลือก Role = `Editor`
-6. คลิก “Done”
+   - Description: `For accessing Google Sheet`
+4. Click “Create and Continue”
+5. **On the permissions step**, select Role = `Editor`
+6. Click “Done”
 
 ---
 
-### 4. สร้าง Credentials (credentials.json)
+### 4. Generate Credentials (credentials.json)
 
-1. ในหน้า Service Accounts > คลิกชื่อที่สร้างไว้
-2. ไปที่แท็บ `Keys`
-3. คลิก “Add Key” → “Create new key”
-4. เลือก `JSON` → กด “Create”
-5. จะได้ไฟล์ `credentials.json` ดาวน์โหลดมาไว้ในโปรเจกต์ของคุณ  
-   > ❗ ห้าม push ขึ้น Git
-
----
-
-### 5. แชร์ Google Sheet ให้กับ Service Account
-
-1. เปิด Google Sheet ที่คุณสร้างไว้
-2. คลิก “Share”
-3. คัดลอก **email ของ Service Account** (เช่น `expense-bot-service@your-project-id.iam.gserviceaccount.com`)
-4. วางลงในช่อง "Add people and groups" แล้วให้สิทธิ์เป็น `Editor`
-5. กด “Send”
+1. From the Service Accounts list, click the one you created
+2. Go to the `Keys` tab
+3. Click “Add Key” → “Create new key”
+4. Choose `JSON` → Click “Create”
+5. A file named `credentials.json` will be downloaded — move it to your project folder  
+   > ❗ **Never commit this file to Git**
 
 ---
 
-## ✅ เพิ่มค่าลงใน `.env` เช่น **ตัวอย่างด้านล่าง**
+### 5. Share the Google Sheet with the Service Account
+
+1. Open the Google Sheet you created
+2. Click “Share”
+3. Copy the **email address** of the service account  
+   (e.g., `expense-bot-service@your-project-id.iam.gserviceaccount.com`)
+4. Paste it into the “Add people and groups” field
+5. Grant `Editor` access and click “Send”
+
+---
+
+## ✅ Add to your `.env` file
+
+Example:
 
 ```dotenv
 SPREADSHEET_ID=1AbCDEFGHIJKLmnOxyz1234567890abcdef
 SPREADSHEET_LINK=https://docs.google.com/spreadsheets/d/1AbCDEFGHIJKLmnOxyz1234567890abcdef
-
----
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token

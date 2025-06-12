@@ -1,23 +1,23 @@
 # 📲 Telegram Expense Bot 💰  
-ระบบจดรายรับรายจ่ายผ่าน Telegram แล้วบันทึกอัตโนมัติลง Google Sheet
+A Telegram bot for recording income and expenses, automatically logging them into Google Sheets.
 
 ---
 
-## 🔧 วิธีติดตั้ง
+## 🔧 Installation Guide
 
-1. สร้าง Telegram Bot
-- เปิด [BotFather](https://t.me/botfather)
-- สร้างบอทใหม่และรับ `BOT_TOKEN`
+1. **Create a Telegram Bot**
+- Open [BotFather](https://t.me/botfather)
+- Create a new bot and obtain the `BOT_TOKEN`
 
-2. สร้าง Google Sheet และเปิด API
-ดูขั้นตอนใน [📄 docs/setup-google-sheet.md](docs/google-sheet-setup.md)
+2. **Create a Google Sheet and Enable the API**  
+Follow the steps in [📄 docs/google-sheet-setup.md](docs/google-sheet-setup.md)
 
-3. สร้างไฟล์ `.env` จาก `.env.example`
+3. **Create a `.env` file from the example**
 ```bash
 cp .env.example .env
 ```
 4. install task
-    - scoop install go-task (windows)
+    - scoop install go-task (Windows)
     - brew install go-task/tap/go-task (Mac)
 
 5. รัน:
@@ -26,9 +26,9 @@ cp .env.example .env
 task dev
 ```
 
-## 🧪 ทดสอบ
-1. รันบอทด้วย task dev
-2. ส่งข้อความใน Telegram เช่น: กาแฟ 50 #กาแฟ 
-3. ดูว่า Google Sheet มีแถวเพิ่ม ✅
+## 🧪 Testing
+1. Run the bot using task dev
+2. Send a message to the bot in Telegram, e.g., coffee 50 #drink
+3. Check that a new row is added to your Google Sheet ✅
 
 ---
