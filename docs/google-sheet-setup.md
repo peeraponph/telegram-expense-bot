@@ -70,7 +70,7 @@
 
 ---
 
-## ✅ เพิ่มค่าลงใน `.env`
+## ✅ เพิ่มค่าลงใน `.env` เช่น **ตัวอย่างด้านล่าง**
 
 ```dotenv
 SPREADSHEET_ID=1AbCDEFGHIJKLmnOxyz1234567890abcdef
