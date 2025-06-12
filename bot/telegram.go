@@ -58,14 +58,13 @@ func (b *BotHandler) HandleUpdate(update tgbotapi.Update) {
 		io.Copy(out, resp.Body)
 
 		amount, err := service.ExtractAmountFromImage(tmpPath)
-		if err != nil {
-			b.Bot.Send(tgbotapi.NewMessage(chatID, "❌ อ่านยอดเงินจากสลิปไม่ได้: "+err.Error()))
-			return
-		}
 
-		msg := fmt.Sprintf("📸 อ่านจากสลิป: พบยอด %d บาท", amount)
-		b.Bot.Send(tgbotapi.NewMessage(chatID, msg))
-		return
+		if err != nil {
+			b.Bot.Send(tgbotapi.NewMessage(chatID, fmt.Sprintf("❌ OCR ไม่สามารถอ่านจำนวนเงินได้: %v", err)))
+		} else {
+			b.Sheet.AppendToSheet(amount, "จากภาพ OCR")
+			b.Bot.Send(tgbotapi.NewMessage(chatID, fmt.Sprintf("✅ บันทึกเรียบร้อย: %d บาท", amount)))
+		}
 	}
 
 	// Handle text message

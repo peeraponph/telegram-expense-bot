@@ -1,41 +1,43 @@
 # syntax=docker/dockerfile:1
 
-# Step 1: Build stage (Go 1.24 + Tesseract)
+# Step 1: Build stage
 FROM golang:1.24-bullseye AS builder
 
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
+    tesseract-ocr-tha \
     libtesseract-dev \
     libleptonica-dev \
+    imagemagick \
     gcc g++ \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy module files first เพื่อใช้ caching
+# Module caching
 COPY go.mod go.sum ./
 RUN go mod tidy
 
-# Copy all source code
+# Copy source
 COPY . .
 
-# Build binary จาก cmd/main.go
 WORKDIR /app/cmd
 RUN go build -o bot .
 
-# Step 2: Runtime stage (เบา)
+# Step 2: Runtime stage (slim)
 FROM debian:bullseye-slim AS runtime
 
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
+    tesseract-ocr-tha \
+    imagemagick \
     ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy binary และ config ต่างๆ
-COPY --from=builder /app/cmd/bot /app/bot
+COPY --from=builder /app/cmd/bot .
 COPY .env credentials.json ./
 
 CMD ["./bot"]

@@ -20,13 +20,16 @@ type SheetWriter interface {
 	GetTodaySummary() (string, error)
 	GetMonthSummary() (string, error)
 	ExportToExcel(filename string) error
+	AppendToSheet(amount int, source string) error
 }
 
 type GoogleSheetService struct {
 	srv           *sheets.Service
 	spreadsheetID string
+	b             string
 }
 
+// NewGoogleSheetService initializes a new Google Sheet service using credentials from a JSON file.
 func NewGoogleSheetService() (*GoogleSheetService, error) {
 	ctx := context.Background()
 
@@ -48,12 +51,16 @@ func NewGoogleSheetService() (*GoogleSheetService, error) {
 	return &GoogleSheetService{srv: srv, spreadsheetID: spreadsheetID}, nil
 }
 
+// This function writes a single row to the Google Sheet with the provided ExpenseEntry data.
 func (s *GoogleSheetService) WriteRow(entry entity.ExpenseEntry) error {
 	vr := &sheets.ValueRange{
 		Values: [][]interface{}{[]interface{}{entry.Date, entry.Type, entry.Description, entry.Amount, entry.Tag, entry.Note}},
 	}
 
-	_, err := s.srv.Spreadsheets.Values.Append(s.spreadsheetID, "Expenses!A:F", vr).
+	sheetName := "Expenses"
+	writeRange := fmt.Sprintf("%s!A:F", sheetName)
+
+	_, err := s.srv.Spreadsheets.Values.Append(s.spreadsheetID, writeRange, vr).
 		ValueInputOption("USER_ENTERED").
 		Do()
 
@@ -64,8 +71,14 @@ func (s *GoogleSheetService) WriteRow(entry entity.ExpenseEntry) error {
 	return nil
 }
 
+// This function reads data from the Google Sheet and returns a slice of ExpenseEntry.
 func (s *GoogleSheetService) ReadSheetData() ([]entity.ExpenseEntry, error) {
-	resp, err := s.srv.Spreadsheets.Values.Get(s.spreadsheetID, "Expenses!A:F").Do()
+
+	sheetName := "Expenses"
+	writeRange := fmt.Sprintf("%s!A:F", sheetName)
+
+	resp, err := s.srv.Spreadsheets.Values.Get(s.spreadsheetID, writeRange).Do()
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot read data from Google Sheet: %v", err)
 	}
@@ -93,7 +106,7 @@ func (s *GoogleSheetService) ReadSheetData() ([]entity.ExpenseEntry, error) {
 	return records, nil
 }
 
-// GetTodaySummary สรุปรายรับรายจ่ายของวันนี้
+// This function summarizes the income and expenses for today.
 func (s *GoogleSheetService) GetTodaySummary() (string, error) {
 	records, err := s.ReadSheetData()
 	if err != nil {
@@ -121,8 +134,7 @@ func (s *GoogleSheetService) GetTodaySummary() (string, error) {
 	), nil
 }
 
-// getSafe returns the value at index i from row if it exists, otherwise returns an empty string.
-
+// This function summarizes the income and expenses for the current month.
 func (s *GoogleSheetService) GetMonthSummary() (string, error) {
 	records, err := s.ReadSheetData()
 	if err != nil {
@@ -152,6 +164,35 @@ func (s *GoogleSheetService) GetMonthSummary() (string, error) {
 	), nil
 }
 
+// This function is used to append data to the Google Sheet after processing an image or text input.
+func (s *GoogleSheetService) AppendToSheet(amount int, source string) error {
+	sheetName := "Expenses"
+	writeRange := fmt.Sprintf("%s!A:F", sheetName)
+
+	// Prepare row (ใส่ข้อมูลแบบขั้นต่ำ)
+	row := []interface{}{
+		time.Now().Format("2006-01-02"), // Date (A)
+		"รายจ่าย",                       // Type (B)
+		"จากภาพ OCR",                    // Description (C)
+		amount,                          // Amount (D)
+		"OCR",                           // Tag (E)
+		source,                          // Note (F)
+	}
+
+	rb := &sheets.ValueRange{
+		Values: [][]interface{}{row},
+	}
+
+	_, err := s.srv.Spreadsheets.Values.Append(s.spreadsheetID, writeRange, rb).
+		ValueInputOption("USER_ENTERED").
+		Do()
+	if err != nil {
+		return fmt.Errorf("unable to append data: %v", err)
+	}
+	return nil
+}
+
+// This function exports the data from the Google Sheet to an Excel file.
 func (s *GoogleSheetService) ExportToExcel(filename string) error {
 	records, err := s.ReadSheetData()
 	if err != nil {
@@ -160,10 +201,12 @@ func (s *GoogleSheetService) ExportToExcel(filename string) error {
 
 	f := excelize.NewFile()
 	sheetName := "Expenses"
+
 	index, err := f.NewSheet(sheetName)
 	if err != nil {
 		return fmt.Errorf("cannot create new sheet: %v", err)
 	}
+	
 	f.SetActiveSheet(index)
 
 	headers := []string{"วันที่", "ประเภท", "รายละเอียด", "จำนวนเงิน", "Tag", "หมายเหตุ"}

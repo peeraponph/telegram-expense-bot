@@ -15,11 +15,13 @@ func (m *MockSheet) WriteRow(e entity.ExpenseEntry) error {
 	m.Saved = append(m.Saved, e)
 	return nil
 }
-
 func (m *MockSheet) ReadSheetData() ([]entity.ExpenseEntry, error) { return nil, nil }
 func (m *MockSheet) GetTodaySummary() (string, error)              { return "", nil }
 func (m *MockSheet) GetMonthSummary() (string, error)              { return "", nil }
 func (m *MockSheet) ExportToExcel(filename string) error           { return nil }
+func (m *MockSheet) AppendToSheet(amount int, source string) error {
+	return nil
+}
 
 func TestHandleMessage(t *testing.T) {
 	mock := &MockSheet{}
