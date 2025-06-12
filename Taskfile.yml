@@ -1,0 +1,45 @@
+version: '3'
+
+env:
+  GO111MODULE: on
+
+tasks:
+  dev:
+    desc: "Run the Telegram bot"
+    cmds:
+      - go run cmd/main.go
+
+  build:
+    desc: "Build the Go application"
+    cmds:
+      - go build -o expense-bot main.go
+
+  test:
+    desc: "Run all Go tests"
+    cmds:
+      - go test ./...
+
+  tidy:
+    desc: "Clean up go.mod and go.sum"
+    cmds:
+      - go mod tidy
+
+  lint:
+    desc: "Run golangci-lint"
+    cmds:
+      - golangci-lint run
+
+  docker-build:
+    desc: "Build Docker image"
+    cmds:
+      - docker build -t telegram-expense-bot .
+
+  docker-run:
+    desc: "Run Docker container"
+    cmds:
+      - docker run --rm -p 8080:8080 telegram-expense-bot
+
+  clean:
+    desc: "Remove built files"
+    cmds:
+      - rm -f expense-bot export.xlsx

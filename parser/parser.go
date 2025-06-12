@@ -3,19 +3,12 @@ package parser
 import (
 	"regexp"
 	"strings"
+	"telegram-expense-bot/entity"
 	"time"
 )
 
-type ParsedMessage struct {
-	Date        string
-	Type        string
-	Description string
-	Amount      int
-	Tag         string
-	Note        string
-}
-
-func ParseMessage(message string) ParsedMessage {
+// ParsedMessage struct to hold the parsed message details	
+func ParseMessage(message string) entity.ExpenseEntry {
 	now := time.Now().Format("2006-01-02")
 
 	// 1. ดึง tag เช่น #ของกิน
@@ -60,7 +53,7 @@ func ParseMessage(message string) ParsedMessage {
 
 	description := strings.TrimSpace(message)
 
-	return ParsedMessage{
+	return entity.ExpenseEntry{
 		Date:        date,
 		Type:        t,
 		Description: description,

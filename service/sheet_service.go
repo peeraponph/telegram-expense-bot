@@ -1,10 +1,12 @@
-package sheet
+package service
 
 import (
 	"context"
 	"fmt"
 	"os"
 	"strings"
+	"telegram-expense-bot/entity"
+	u "telegram-expense-bot/util"
 	"time"
 
 	"github.com/xuri/excelize/v2"
@@ -12,96 +14,88 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-func WriteRow(row []interface{}) error {
+type SheetWriter interface {
+	WriteRow(entry entity.ExpenseEntry) error
+	ReadSheetData() ([]entity.ExpenseEntry, error)
+	GetTodaySummary() (string, error)
+	GetMonthSummary() (string, error)
+	ExportToExcel(filename string) error
+}
+
+type GoogleSheetService struct {
+	srv           *sheets.Service
+	spreadsheetID string
+}
+
+func NewGoogleSheetService() (*GoogleSheetService, error) {
 	ctx := context.Background()
 
 	spreadsheetID := os.Getenv("SPREADSHEET_ID")
 	if spreadsheetID == "" {
-		return fmt.Errorf("ไม่พบค่า SPREADSHEET_ID")
+		return nil, fmt.Errorf("ไม่พบค่า SPREADSHEET_ID")
 	}
 
-	// โหลด credentials.json
 	b, err := os.ReadFile("credentials.json")
 	if err != nil {
-		return fmt.Errorf("อ่าน credentials.json ไม่ได้: %v", err)
+		return nil, fmt.Errorf("cannot read credentials.json file : %v", err)
 	}
 
 	srv, err := sheets.NewService(ctx, option.WithCredentialsJSON(b))
 	if err != nil {
-		return fmt.Errorf("เชื่อม Google Sheets ไม่ได้: %v", err)
+		return nil, fmt.Errorf("cannot create sheets service: %v", err)
 	}
 
+	return &GoogleSheetService{srv: srv, spreadsheetID: spreadsheetID}, nil
+}
+
+func (s *GoogleSheetService) WriteRow(entry entity.ExpenseEntry) error {
 	vr := &sheets.ValueRange{
-		Values: [][]interface{}{row},
+		Values: [][]interface{}{[]interface{}{entry.Date, entry.Type, entry.Description, entry.Amount, entry.Tag, entry.Note}},
 	}
 
-	_, err = srv.Spreadsheets.Values.Append(spreadsheetID, "Expenses!A:F", vr).
-		ValueInputOption("USER_ENTERED").Do()
+	_, err := s.srv.Spreadsheets.Values.Append(s.spreadsheetID, "Expenses!A:F", vr).
+		ValueInputOption("USER_ENTERED").
+		Do()
 
 	if err != nil {
-		return fmt.Errorf("เขียนข้อมูลลงชีทไม่สำเร็จ: %v", err)
+		return fmt.Errorf("cannot write row to Google Sheet: %v", err)
 	}
 
 	return nil
 }
 
-type Record struct {
-	Date        string
-	Type        string
-	Description string
-	Amount      int
-	Tag         string
-	Note        string
-}
-
-func ReadSheetData() ([]Record, error) {
-	ctx := context.Background()
-	spreadsheetID := os.Getenv("SPREADSHEET_ID")
-	if spreadsheetID == "" {
-		return nil, fmt.Errorf("SPREADSHEET_ID ไม่ถูกตั้งค่า")
-	}
-
-	b, err := os.ReadFile("credentials.json")
+func (s *GoogleSheetService) ReadSheetData() ([]entity.ExpenseEntry, error) {
+	resp, err := s.srv.Spreadsheets.Values.Get(s.spreadsheetID, "Expenses!A:F").Do()
 	if err != nil {
-		return nil, fmt.Errorf("อ่าน credentials.json ไม่ได้: %v", err)
+		return nil, fmt.Errorf("cannot read data from Google Sheet: %v", err)
 	}
 
-	srv, err := sheets.NewService(ctx, option.WithCredentialsJSON(b))
-	if err != nil {
-		return nil, fmt.Errorf("เชื่อม Google Sheets ไม่สำเร็จ: %v", err)
-	}
-
-	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, "Expenses!A:F").Do()
-	if err != nil {
-		return nil, fmt.Errorf("อ่านข้อมูลจาก Google Sheet ไม่ได้: %v", err)
-	}
-
-	var records []Record
+	var records []entity.ExpenseEntry
 	for i, row := range resp.Values {
 		if i == 0 {
-			continue // ข้าม header (ถ้ามี)
+			continue // ข้าม header
 		}
 
 		amount := 0
-		fmt.Sscanf(fmt.Sprintf("%v", row[3]), "%d", &amount)
+		fmt.Sscanf(fmt.Sprintf("%v", u.GetSafe(row, 3)), "%d", &amount)
 
-		record := Record{
-			Date:        getSafe(row, 0),
-			Type:        getSafe(row, 1),
-			Description: getSafe(row, 2),
+		record := entity.ExpenseEntry{
+			Date:        u.GetSafe(row, 0),
+			Type:        u.GetSafe(row, 1),
+			Description: u.GetSafe(row, 2),
 			Amount:      amount,
-			Tag:         getSafe(row, 4),
-			Note:        getSafe(row, 5),
+			Tag:         u.GetSafe(row, 4),
+			Note:        u.GetSafe(row, 5),
 		}
-
 		records = append(records, record)
 	}
+
 	return records, nil
 }
 
 // GetTodaySummary สรุปรายรับรายจ่ายของวันนี้
-func GetTodaySummary() (string, error) {
-	records, err := ReadSheetData()
+func (s *GoogleSheetService) GetTodaySummary() (string, error) {
+	records, err := s.ReadSheetData()
 	if err != nil {
 		return "", err
 	}
@@ -128,15 +122,9 @@ func GetTodaySummary() (string, error) {
 }
 
 // getSafe returns the value at index i from row if it exists, otherwise returns an empty string.
-func getSafe(row []interface{}, i int) string {
-	if len(row) > i {
-		return fmt.Sprintf("%v", row[i])
-	}
-	return ""
-}
 
-func GetMonthSummary() (string, error) {
-	records, err := ReadSheetData()
+func (s *GoogleSheetService) GetMonthSummary() (string, error) {
+	records, err := s.ReadSheetData()
 	if err != nil {
 		return "", err
 	}
@@ -164,8 +152,8 @@ func GetMonthSummary() (string, error) {
 	), nil
 }
 
-func ExportToExcel(filename string) error {
-	records, err := ReadSheetData()
+func (s *GoogleSheetService) ExportToExcel(filename string) error {
+	records, err := s.ReadSheetData()
 	if err != nil {
 		return err
 	}
@@ -174,7 +162,7 @@ func ExportToExcel(filename string) error {
 	sheetName := "Expenses"
 	index, err := f.NewSheet(sheetName)
 	if err != nil {
-		return fmt.Errorf("สร้างชีตใหม่ไม่สำเร็จ: %v", err)
+		return fmt.Errorf("cannot create new sheet: %v", err)
 	}
 	f.SetActiveSheet(index)
 
