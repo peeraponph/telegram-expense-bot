@@ -12,21 +12,21 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env.deploy")
-	if err != nil {
-		log.Println("⚠️ Not Found .env", err)
-	}
 
-	// เตรียม Google Sheet Service
+
+	_ = godotenv.Load(".env.deploy")
+
+
+	// Prepair Google Sheet Service
 	sheetService, err := service.NewGoogleSheetService()
 	if err != nil {
 		log.Fatal("❌ Google Sheet Service Does Not Initialize:", err)
 	}
 
-	// เตรียม Controller
+	// Prepair Controller
 	controller := controller.NewExpenseController(sheetService)
 
-	// สร้าง Telegram Bot
+	// Create Telegram Bot
 	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
 	if botToken == "" {
 		log.Fatal("❌  TELEGRAM_BOT_TOKEN Not Found in .env")
@@ -38,10 +38,10 @@ func main() {
 	}
 	log.Printf("✅ Initialize Telegram Bot @%s", botAPI.Self.UserName)
 
-	// สร้าง BotHandler
+	// Create BotHandler
 	handler := bot.NewBotHandler(botAPI, controller, sheetService)
 
-	// เริ่มรับ update
+	// Run update
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	updates := botAPI.GetUpdatesChan(u)
