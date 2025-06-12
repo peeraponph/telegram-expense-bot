@@ -39,12 +39,12 @@ func NewGoogleSheetService() (*GoogleSheetService, error) {
 		return nil, fmt.Errorf("ไม่พบค่า SPREADSHEET_ID")
 	}
 
-	b, err := os.ReadFile("credentials.json")
-	if err != nil {
-		return nil, fmt.Errorf("cannot read credentials.json file : %v", err)
+	credJSON := os.Getenv("GOOGLE_CREDENTIALS_JSON")
+	if credJSON == "" {
+		return nil, fmt.Errorf("ไม่พบค่า GOOGLE_CREDENTIALS_JSON")
 	}
 
-	srv, err := sheets.NewService(ctx, option.WithCredentialsJSON(b))
+	srv, err := sheets.NewService(ctx, option.WithCredentialsJSON([]byte(credJSON)))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create sheets service: %v", err)
 	}

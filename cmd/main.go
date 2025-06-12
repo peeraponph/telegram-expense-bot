@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// โหลด .env
-	err := godotenv.Load()
+	err := godotenv.Load(".env.deploy")
 	if err != nil {
 		log.Println("⚠️ Not Found .env", err)
 	}

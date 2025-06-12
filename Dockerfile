@@ -38,6 +38,5 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 COPY --from=builder /app/cmd/bot .
-COPY credentials.json ./
 
 CMD ["./bot"]
