@@ -1,0 +1,29 @@
+# Go build artifacts
+/app
+*.exe
+*.out
+*.test
+
+# Go modules cache
+vendor/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Env and credentials
+.env
+.env.*
+credentials.json
+
+# Tests and coverage
+*.cover
+*.cov
+*.coverage
+test/
