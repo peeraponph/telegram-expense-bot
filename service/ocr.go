@@ -54,18 +54,15 @@ func ExtractAmountFromImage(path string) (float64, error) {
 		return 0, fmt.Errorf("OCR failed: %v", err)
 	}
 
-	re := regexp.MustCompile(`\d{1,4}[.,]\d{1,2}`)
+	re := regexp.MustCompile(`\d{1,3}(?:,\d{3})*(?:\.\d{2})?`)
 
 	matches := re.FindAllString(text, -1)
 
 	max := 0.0
 	for _, match := range matches {
-		match = strings.ReplaceAll(match, ",", "")
-		fmt.Println("🔍 Found match:", match)
-		if strings.HasSuffix(match, ".") {
-			match += "00" // "50." → "50.00"
-		}
-		val, err := strconv.ParseFloat(match, 64)
+		matchClean := strings.ReplaceAll(match, ",", "") // 6,800.00 → 6800.00
+		fmt.Println("🔍 Found match:", matchClean)
+		val, err := strconv.ParseFloat(matchClean, 64)
 		if err == nil && val > max {
 			max = val
 		}
