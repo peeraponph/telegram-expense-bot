@@ -5,17 +5,17 @@
 
 ## 🔧 วิธีติดตั้ง
 
-### 1. สร้าง Telegram Bot
+1. สร้าง Telegram Bot
 - เปิด [BotFather](https://t.me/botfather)
 - สร้างบอทใหม่และรับ `BOT_TOKEN`
 
-### 2. สร้าง Google Sheet และเปิด API
-ดูขั้นตอนใน [📄 docs/setup-google-sheet.md](docs/setup-google-sheet.md)
+2. สร้าง Google Sheet และเปิด API
+ดูขั้นตอนใน [📄 docs/setup-google-sheet.md](docs/google-sheet-setup.md)
 
-### 3. สร้างไฟล์ `.env` จาก `.env.example`
+3. สร้างไฟล์ `.env` จาก `.env.example`
 ```bash
 cp .env.example .env
-
+```
 4. install task
     - scoop install go-task (windows)
     - brew install go-task/tap/go-task (Mac)
