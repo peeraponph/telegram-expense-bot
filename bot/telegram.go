@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"os"
 	"telegram-expense-bot/controller"
+	"telegram-expense-bot/entity"
 	"telegram-expense-bot/service"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -62,8 +64,16 @@ func (b *BotHandler) HandleUpdate(update tgbotapi.Update) {
 		if err != nil {
 			b.Bot.Send(tgbotapi.NewMessage(chatID, fmt.Sprintf("❌ OCR ไม่สามารถอ่านจำนวนเงินได้: %v", err)))
 		} else {
-			b.Sheet.AppendToSheet(amount, "จากภาพ OCR")
-			b.Bot.Send(tgbotapi.NewMessage(chatID, fmt.Sprintf("✅ บันทึกเรียบร้อย: %d บาท", amount)))
+			entry := entity.ExpenseEntry{
+				Date:        time.Now().Format("2006-01-02"),
+				Type:        "รายจ่าย",
+				Description: "จากภาพ OCR",
+				Amount:      amount,
+				Tag:         "#OCR",
+				Note:        "จากรูปภาพ",
+			}
+			reply := b.Controller.HandleParsedEntry(entry)
+			b.Bot.Send(tgbotapi.NewMessage(chatID, reply))
 		}
 	}
 

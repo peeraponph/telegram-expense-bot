@@ -20,7 +20,7 @@ type SheetWriter interface {
 	GetTodaySummary() (string, error)
 	GetMonthSummary() (string, error)
 	ExportToExcel(filename string) error
-	AppendToSheet(amount int, source string) error
+	AppendToSheet(amount float64, source string) error
 }
 
 type GoogleSheetService struct {
@@ -89,8 +89,8 @@ func (s *GoogleSheetService) ReadSheetData() ([]entity.ExpenseEntry, error) {
 			continue // ข้าม header
 		}
 
-		amount := 0
-		fmt.Sscanf(fmt.Sprintf("%v", u.GetSafe(row, 3)), "%d", &amount)
+		amount := 0.0
+		fmt.Sscanf(fmt.Sprintf("%v", u.GetSafe(row, 3)), "%f", &amount)
 
 		record := entity.ExpenseEntry{
 			Date:        u.GetSafe(row, 0),
@@ -114,8 +114,8 @@ func (s *GoogleSheetService) GetTodaySummary() (string, error) {
 	}
 
 	today := time.Now().Format("2006-01-02")
-	income := 0
-	expense := 0
+	income := 0.0
+	expense := 0.0
 
 	for _, rec := range records {
 		if rec.Date == today {
@@ -129,7 +129,7 @@ func (s *GoogleSheetService) GetTodaySummary() (string, error) {
 
 	balance := income - expense
 	return fmt.Sprintf(
-		"📊 สรุปวันนี้ (%s):\nรายรับ: %d บาท\nรายจ่าย: %d บาท\nคงเหลือ: %+d บาท",
+		"📊 สรุปวันนี้ (%s):\nรายรับ: %.2f บาท\nรายจ่าย: %.2f บาท\nคงเหลือ: %.2f บาท",
 		today, income, expense, balance,
 	), nil
 }
@@ -144,8 +144,8 @@ func (s *GoogleSheetService) GetMonthSummary() (string, error) {
 	now := time.Now()
 	currentMonth := now.Format("2006-01") // เช่น "2025-06"
 
-	income := 0
-	expense := 0
+	income := 0.0
+	expense := 0.0
 
 	for _, rec := range records {
 		if strings.HasPrefix(rec.Date, currentMonth) {
@@ -159,13 +159,13 @@ func (s *GoogleSheetService) GetMonthSummary() (string, error) {
 
 	balance := income - expense
 	return fmt.Sprintf(
-		"📊 สรุปเดือนนี้ (%s):\nรายรับ: %d บาท\nรายจ่าย: %d บาท\nคงเหลือ: %+d บาท",
+		"📊 สรุปเดือนนี้ (%s):\nรายรับ: %.2f บาท\nรายจ่าย: %.2f บาท\nคงเหลือ: %.2f บาท",
 		now.Format("January 2006"), income, expense, balance,
 	), nil
 }
 
 // This function is used to append data to the Google Sheet after processing an image or text input.
-func (s *GoogleSheetService) AppendToSheet(amount int, source string) error {
+func (s *GoogleSheetService) AppendToSheet(amount float64, source string) error {
 	sheetName := "Expenses"
 	writeRange := fmt.Sprintf("%s!A:F", sheetName)
 
@@ -206,7 +206,7 @@ func (s *GoogleSheetService) ExportToExcel(filename string) error {
 	if err != nil {
 		return fmt.Errorf("cannot create new sheet: %v", err)
 	}
-	
+
 	f.SetActiveSheet(index)
 
 	headers := []string{"วันที่", "ประเภท", "รายละเอียด", "จำนวนเงิน", "Tag", "หมายเหตุ"}

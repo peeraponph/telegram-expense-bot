@@ -20,7 +20,7 @@ cp .env.example .env
     - scoop install go-task (Windows)
     - brew install go-task/tap/go-task (Mac)
 
-5. รัน:
+5. run:
 
 ```bash
 task dev

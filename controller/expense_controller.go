@@ -21,7 +21,7 @@ func (c *ExpenseController) HandleMessage(input string) string {
 	if err != nil {
 		return fmt.Sprintf("❌ บันทึกไม่สำเร็จ: %v", err)
 	}
-	return fmt.Sprintf("✅ บันทึกแล้ว: %s", entry.Description)
+	return fmt.Sprintf("✅ บันทึกแล้ว: %s (%.2f)", entry.Description, entry.Amount)
 }
 
 func (c *ExpenseController) HandleParsedEntry(entry entity.ExpenseEntry) string {
@@ -29,5 +29,5 @@ func (c *ExpenseController) HandleParsedEntry(entry entity.ExpenseEntry) string 
 	if err != nil {
 		return fmt.Sprintf("❌ บันทึกไม่สำเร็จ: %v", err)
 	}
-	return fmt.Sprintf("✅ บันทึกแล้ว: %s", entry.Description)
+	return fmt.Sprintf("✅ บันทึกแล้ว: %s (%.2f)", entry.Description, entry.Amount)
 }

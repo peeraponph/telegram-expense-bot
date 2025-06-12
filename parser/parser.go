@@ -2,12 +2,13 @@ package parser
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 	"telegram-expense-bot/entity"
 	"time"
 )
 
-// ParsedMessage struct to hold the parsed message details	
+// ParsedMessage struct to hold the parsed message details
 func ParseMessage(message string) entity.ExpenseEntry {
 	now := time.Now().Format("2006-01-02")
 
@@ -33,13 +34,19 @@ func ParseMessage(message string) entity.ExpenseEntry {
 	}
 
 	// 3. ดึงจำนวนเงิน (เลขสุดท้าย)
-	reAmount := regexp.MustCompile(`\d+`)
+	reAmount := regexp.MustCompile(`\d+(?:[.,]\d+)?`)
+
 	allMatches := reAmount.FindAllStringIndex(message, -1)
 
-	amount := 0
+	amount := 0.0
 	if len(allMatches) > 0 {
 		last := allMatches[len(allMatches)-1]
-		amount = parseInt(message[last[0]:last[1]])
+		raw := message[last[0]:last[1]]
+		raw = strings.ReplaceAll(raw, ",", "") // Clear comma
+		val, err := strconv.ParseFloat(raw, 64)
+		if err == nil {
+			amount = val
+		}
 		message = strings.TrimSpace(message[:last[0]] + message[last[1]:])
 	}
 

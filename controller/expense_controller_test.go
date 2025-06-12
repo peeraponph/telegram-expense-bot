@@ -19,7 +19,7 @@ func (m *MockSheet) ReadSheetData() ([]entity.ExpenseEntry, error) { return nil,
 func (m *MockSheet) GetTodaySummary() (string, error)              { return "", nil }
 func (m *MockSheet) GetMonthSummary() (string, error)              { return "", nil }
 func (m *MockSheet) ExportToExcel(filename string) error           { return nil }
-func (m *MockSheet) AppendToSheet(amount int, source string) error {
+func (m *MockSheet) AppendToSheet(amount float64, source string) error {
 	return nil
 }
 

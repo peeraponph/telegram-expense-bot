@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,7 +21,7 @@ func PreprocessImage(inputPath string) (string, error) {
 		"-colorspace", "Gray", // Convert to grayscale
 		"-brightness-contrast", "15x30", // Improve contrast
 		"-sharpen", "0x1", // Slight sharpening
-		"-threshold", "45%", // Binarization
+		"-threshold", "50%", // Binarization
 		"-define", "png:compression-level=9", // Reduce file size
 		outputPath,
 	)
@@ -36,7 +35,7 @@ func PreprocessImage(inputPath string) (string, error) {
 }
 
 // ExtractAmountFromImage reads the image and extracts the highest probable amount
-func ExtractAmountFromImage(path string) (int, error) {
+func ExtractAmountFromImage(path string) (float64, error) {
 	processedPath, err := PreprocessImage(path)
 	if err != nil {
 		return 0, err
@@ -48,7 +47,7 @@ func ExtractAmountFromImage(path string) (int, error) {
 
 	client.SetImage(processedPath)
 	client.SetLanguage("tha+eng")
-	client.SetWhitelist("0123456789.")
+	client.SetWhitelist("0123456789.,")
 
 	text, err := client.Text()
 	if err != nil {
@@ -56,13 +55,15 @@ func ExtractAmountFromImage(path string) (int, error) {
 	}
 
 	re := regexp.MustCompile(`\d{1,4}[.,]\d{1,2}`)
+
 	matches := re.FindAllString(text, -1)
 
 	max := 0.0
 	for _, match := range matches {
 		match = strings.ReplaceAll(match, ",", "")
+		fmt.Println("🔍 Found match:", match)
 		if strings.HasSuffix(match, ".") {
-			match += "00" // เช่น "50." → "50.00"
+			match += "00" // "50." → "50.00"
 		}
 		val, err := strconv.ParseFloat(match, 64)
 		if err == nil && val > max {
@@ -75,5 +76,6 @@ func ExtractAmountFromImage(path string) (int, error) {
 		return 0, fmt.Errorf("no valid amount found from OCR")
 	}
 
-	return int(math.Round(max)), nil
+	return max, nil
+
 }
