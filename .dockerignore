@@ -18,9 +18,9 @@ vendor/
 Thumbs.db
 
 # Env and credentials
-.env
-.env.*
-credentials.json
+# .env
+# .env.*
+# credentials.json
 
 # Tests and coverage
 *.cover
