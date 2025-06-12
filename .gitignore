@@ -1,6 +1,5 @@
 # Config / Secret
 .env
-.env.*
 credentials.json
 export.xlsx
 
