@@ -52,7 +52,7 @@ func ParseMessage(message string) ParsedMessage {
 
 	// 4. ตรวจว่าเป็นรายรับหรือรายจ่าย
 	var t string
-	if strings.Contains(message, "ขาย") || strings.Contains(message, "ได้") || strings.Contains(message, "รับ") {
+	if strings.Contains(message, "ขาย") || strings.Contains(message, "ได้") || strings.Contains(message, "รับ") || strings.Contains(message, "เก็บ") {
 		t = "รายรับ"
 	} else {
 		t = "รายจ่าย"

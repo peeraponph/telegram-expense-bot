@@ -39,28 +39,38 @@ func main() {
 		if update.Message == nil || update.Message.Text == "" {
 			continue
 		}
+		switch update.Message.Text {
+		case "/summary":
+			summary, err := sheet.GetTodaySummary()
+			if err != nil {
+				summary = "❌ ดึงข้อมูลล้มเหลว: " + err.Error()
+			}
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, summary)
+			bot.Send(msg)
+		
+		default:
+			parsed := parser.ParseMessage(update.Message.Text)
 
-		text := update.Message.Text
-		parsed := parser.ParseMessage(text)
+			row := []interface{}{
+				parsed.Date,
+				parsed.Type,
+				parsed.Description,
+				parsed.Amount,
+				parsed.Tag,
+				parsed.Note,
+			}
+		
 
-		row := []interface{}{
-			parsed.Date,
-			parsed.Type,
-			parsed.Description,
-			parsed.Amount,
-			parsed.Tag,
-			parsed.Note,
+			err := sheet.WriteRow(row)
+			var reply string
+			if err != nil {
+				reply = "❌ เกิดข้อผิดพลาด: " + err.Error()
+			} else {
+				reply = "✅ บันทึกเรียบร้อย: " + parsed.Description
+			}
+
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
+			bot.Send(msg)
 		}
-
-		err := sheet.WriteRow(row)
-		var reply string
-		if err != nil {
-			reply = "❌ เกิดข้อผิดพลาด: " + err.Error()
-		} else {
-			reply = "✅ บันทึกเรียบร้อย: " + parsed.Description
-		}
-
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
-		bot.Send(msg)
 	}
 }
