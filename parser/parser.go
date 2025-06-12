@@ -5,14 +5,16 @@ import (
 	"strconv"
 	"strings"
 	"telegram-expense-bot/entity"
+	"telegram-expense-bot/util"
 	"time"
 )
 
 // ParsedMessage struct to hold the parsed message details
 func ParseMessage(message string) entity.ExpenseEntry {
-	now := time.Now().Format("2006-01-02")
+	now := util.GetTimestampNow()
+	isBackdated := false
 
-	// 1. ดึง tag เช่น #ของกิน
+	// 1. Rerive tag (if any) from the message e.g. #food, #transport
 	tag := ""
 	reTag := regexp.MustCompile(`#(\S+)`)
 	tagMatch := reTag.FindStringSubmatch(message)
@@ -21,19 +23,23 @@ func ParseMessage(message string) entity.ExpenseEntry {
 		message = reTag.ReplaceAllString(message, "")
 	}
 
-	// 2. ดึงวันที่ (ถ้ามี) เช่น 12/6
+	// 2. Retrieve date from the message e.g. 15/10
 	date := now
 	reDate := regexp.MustCompile(`\b(\d{1,2})/(\d{1,2})\b`)
 	dateMatch := reDate.FindStringSubmatch(message)
 	if len(dateMatch) > 2 {
-		day := dateMatch[1]
-		month := dateMatch[2]
-		year := time.Now().Year()
-		date = time.Date(year, time.Month(parseInt(month)), parseInt(day), 0, 0, 0, 0, time.Local).Format("2006-01-02")
+		isBackdated = true             // If we found a date, assume it's backdated
+		day := parseInt(dateMatch[1])
+		month := parseInt(dateMatch[2])
+		year := util.GetBangkokTime().Year()
+
+		nowTime := util.GetBangkokTime()
+		dateTime := time.Date(year, time.Month(month), day, 0, 0, 0, 0, nowTime.Location())
+		date = dateTime.Format("15:04:05 02-01-2006")
 		message = reDate.ReplaceAllString(message, "")
 	}
 
-	// 3. ดึงจำนวนเงิน (เลขสุดท้าย)
+	// 3. Retrieve amount from the message e.g. 1,000.50
 	reAmount := regexp.MustCompile(`\d+(?:[.,]\d+)?`)
 
 	allMatches := reAmount.FindAllStringIndex(message, -1)
@@ -50,7 +56,7 @@ func ParseMessage(message string) entity.ExpenseEntry {
 		message = strings.TrimSpace(message[:last[0]] + message[last[1]:])
 	}
 
-	// 4. ตรวจว่าเป็นรายรับหรือรายจ่าย
+	// 4. Check income or expense ? 
 	var t string
 	if strings.Contains(message, "ขาย") || strings.Contains(message, "ได้") || strings.Contains(message, "รับ") || strings.Contains(message, "เก็บ") {
 		t = "รายรับ"
@@ -60,13 +66,19 @@ func ParseMessage(message string) entity.ExpenseEntry {
 
 	description := strings.TrimSpace(message)
 
+	// 5. Check if the entry is backdated
+	note := "จดเอง"
+	if isBackdated {
+		note = "จดย้อนหลัง"
+	}
+
 	return entity.ExpenseEntry{
 		Date:        date,
 		Type:        t,
 		Description: description,
 		Amount:      amount,
 		Tag:         tag,
-		Note:        "",
+		Note:        note,
 	}
 }
 

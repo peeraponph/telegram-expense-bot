@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"telegram-expense-bot/entity"
+	"telegram-expense-bot/util"
 	u "telegram-expense-bot/util"
 	"time"
 
@@ -113,7 +114,7 @@ func (s *GoogleSheetService) GetTodaySummary() (string, error) {
 		return "", err
 	}
 
-	today := time.Now().Format("2006-01-02")
+	today := util.GetCurrentDate()
 	income := 0.0
 	expense := 0.0
 
@@ -142,7 +143,7 @@ func (s *GoogleSheetService) GetMonthSummary() (string, error) {
 	}
 
 	now := time.Now()
-	currentMonth := now.Format("2006-01") // เช่น "2025-06"
+	currentMonth := util.GetCurrentMonth() // e.g. "06-2025"
 
 	income := 0.0
 	expense := 0.0
@@ -171,12 +172,12 @@ func (s *GoogleSheetService) AppendToSheet(amount float64, source string) error 
 
 	// Prepare row (ใส่ข้อมูลแบบขั้นต่ำ)
 	row := []interface{}{
-		time.Now().Format("2006-01-02"), // Date (A)
-		"รายจ่าย",                       // Type (B)
-		"จากภาพ OCR",                    // Description (C)
-		amount,                          // Amount (D)
-		"OCR",                           // Tag (E)
-		source,                          // Note (F)
+		util.GetTimestampNow(), // Date (A)
+		"รายจ่าย",              // Type (B)
+		"จากภาพ ",           // Description (C)
+		amount,                 // Amount (D)
+		"OCR",                  // Tag (E)
+		source,                 // Note (F)
 	}
 
 	rb := &sheets.ValueRange{
