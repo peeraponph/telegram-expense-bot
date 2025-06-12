@@ -2,6 +2,7 @@
 .env
 .env.deploy
 credentials.json
+credentials.*
 export.xlsx
 
 # IDE/OS Junk

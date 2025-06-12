@@ -39,4 +39,7 @@ WORKDIR /app
 
 COPY --from=builder /app/cmd/bot .
 
+# Uncomment the following line to use .env.deploy (local build only!)
+# COPY .env.deploy ./
+
 CMD ["./bot"]

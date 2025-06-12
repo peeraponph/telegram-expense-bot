@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strings"
@@ -39,15 +40,17 @@ func NewGoogleSheetService() (*GoogleSheetService, error) {
 		return nil, fmt.Errorf("ไม่พบค่า SPREADSHEET_ID")
 	}
 
-	credJSON := os.Getenv("GOOGLE_CREDENTIALS_JSON")
-	if credJSON == "" {
-		return nil, fmt.Errorf("ไม่พบค่า GOOGLE_CREDENTIALS_JSON")
+	b64 := os.Getenv("GOOGLE_CREDENTIALS_JSON_B64")
+	if b64 == "" {
+		return nil, fmt.Errorf("ไม่พบค่า GOOGLE_CREDENTIALS_JSON_B64")
 	}
 
-	srv, err := sheets.NewService(ctx, option.WithCredentialsJSON([]byte(credJSON)))
+	jsonBytes, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create sheets service: %v", err)
+		return nil, fmt.Errorf("cannot decode base64 GOOGLE_CREDENTIALS_JSON_B64: %v", err)
 	}
+
+	srv, err := sheets.NewService(ctx, option.WithCredentialsJSON(jsonBytes))
 
 	return &GoogleSheetService{srv: srv, spreadsheetID: spreadsheetID}, nil
 }
@@ -174,7 +177,7 @@ func (s *GoogleSheetService) AppendToSheet(amount float64, source string) error 
 	row := []interface{}{
 		util.GetTimestampNow(), // Date (A)
 		"รายจ่าย",              // Type (B)
-		"จากภาพ ",           // Description (C)
+		"จากภาพ ",              // Description (C)
 		amount,                 // Amount (D)
 		"OCR",                  // Tag (E)
 		source,                 // Note (F)
